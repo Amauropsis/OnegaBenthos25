@@ -16,3 +16,14 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+# Данные
+
+```{r LIBs and data-set, echo=FALSE}
+## LIBS ####
+library(tidyverse)
+
+## data-set ####
+data_OP <- read_delim("https://raw.githubusercontent.com/Amauropsis/OnegaBenthos25/refs/heads/main/OP_NB.csv", delim = ";")
+
+```
