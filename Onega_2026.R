@@ -129,7 +129,7 @@ OP_MDS$location <- factor(OP_MDS$location,
                    levels = c("veiga", "glub_near", "glub_far"),
                    labels = c("Вейга", "Перед Глубоким", "За Глубоким"))
 
-nmds_density <- ggplot(OP_MDS, aes(x = MDS1, y = MDS2)) + geom_text(aes(label = station, vjust = +1.2), size = 3, color = "grey70") + geom_segment(data = OP_vec, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), arrow = arrow(length = unit(0.25, "cm")), colour = "grey30") + geom_point(aes(color = location)) + geom_text_repel(data = OP_vec, aes(x = NMDS1, y = NMDS2, label = Spe), size = 3, color = "grey30") + coord_fixed() + xlim(-2.3, 2.3) + scale_color_discrete(name = "Локация", labels = legend) + theme_minimal() + stat_ellipse(aes(color = location), level = 0.75)
+nmds_density <- ggplot(OP_MDS, aes(x = MDS1, y = MDS2)) + geom_text(aes(label = station, vjust = +1.2), size = 3, color = "grey70")  + geom_point(aes(color = location)) + coord_fixed() + xlim(-2.3, 2.3) + scale_color_discrete(name = "Локация", labels = legend) + theme_minimal() + stat_ellipse(aes(color = location), level = 0.75)
 
 ggsave("nmds_density.png", plot = nmds_density)
 
@@ -144,12 +144,12 @@ OP_MDS_bm_hydr_2 <- OP_wide_bm_hydr_2[,4:ncol(OP_wide_bm_hydr_2)]
 OP_MDS_bm_m_hydr_2 <- as.matrix(OP_MDS_bm_hydr_2)
 
 #насколько фактор локация определяет различия между станциями----
-perm_result_2 <- adonis2(OP_MDS_bm_m_hydr_2 ~ location$location, permutations = 999)
+perm_result_2 <- adonis2(OP_MDS_bm_m_hydr_2 ~ location, permutations = 999)
 
-beta_disp2 <- betadisper(vegdist(OP_MDS_bm_m_hydr_2, method = "bray"), location$location)
+beta_disp2 <- betadisper(vegdist(OP_MDS_bm_m_hydr_2, method = "bray"), location)
 
 #simper. за счет каких видов различаются станции-----
-sim_1 <- simper(OP_MDS_bm_m_hydr_2, location$location, permutations = 999)
+sim_1 <- simper(OP_MDS_bm_m_hydr_2, location, permutations = 999)
 sim_sum <- summary(sim_1)
 
 # для каждого попарного сравнения выбираем виды, которые значимо влияют
@@ -161,9 +161,9 @@ pgzg_dif <- as.data.frame(sim_sum$glub_near_glub_far) %>% filter(cumsum < 0.995 
 
 simper_df <- rbind(vpg_dif, vzg_dif, pgzg_dif) 
 
-#анализ индикаторных видов----
+#анализ индикаторных видов------
 
-indval <- multipatt(OP_MDS_bm_hydr_2, location$location, func = "IndVal.g", control = how(nperm = 999))
+indval <- multipatt(OP_MDS_bm_hydr_2, location, func = "IndVal.g", control = how(nperm = 999))
 raw_p <- indval$sign$p.value
 
 # поправка на множественные сравнения
@@ -191,8 +191,9 @@ plot(nmds_bm_new_hydr_2)
 
 #создаем отдельные датафрейм с координатами точек nmds
 nmds_bm_points <- as.data.frame(nmds_bm_new_hydr_2$points)
-nmds_bm_points$location <- location$location
+nmds_bm_points$location <- location
 nmds_bm_points$station <- OP_wide_bm_hydr_2$station
+nmds_bm_points <- nmds_bm_points %>% mutate(location = factor(location, levels = c("veiga","glub_near", "glub_far"))) 
 
 #создаем отдельные датафрейм с координатами конца стрелок nmds
 sp.fit <- as.data.frame(nmds_bm_new_hydr_2$species)
@@ -200,8 +201,6 @@ sp.fit$species <- rownames(sp.fit)
 sp.fit.fin <- left_join(species, sp.fit, by = "species") #выбираем только те виды, которые значимо влияют по результатам анализа индикаторых видов
 sp.fit.fin$species[sp.fit.fin$species == "Hydrobia ventrosa"] <- "Ecrobia ventrosa"
 sp.fit.fin$loc <- c(rep("veiga", 5), rep("glub", 9))
-
-nmds_bm_points <- nmds_bm_points %>% mutate(location = factor(location, levels = c("veiga","glub_near", "glub_far")))
 
 #создаем отдельные датафреймы с точками и стрелочками для вейги и глубокого
 nmds_bm_v <- nmds_bm_points %>% filter(location == "veiga") 
